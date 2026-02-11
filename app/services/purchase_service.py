@@ -46,6 +46,7 @@ def change_breakdown(change: int) -> dict:
     denominations = sorted(settings.SUPPORTED_DENOMINATIONS, reverse=True)
     result: dict[str, int] = {}
     remaining = change
+
     for d in denominations:
         if remaining <= 0:
             break
@@ -53,4 +54,9 @@ def change_breakdown(change: int) -> dict:
         if count > 0:
             result[str(d)] = count
             remaining -= count * d
+
+    if remaining != 0:
+        raise ValueError("cannot_make_exact_change")
+
     return {"change": change, "denominations": result}
+
