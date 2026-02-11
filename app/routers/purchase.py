@@ -13,19 +13,37 @@ router = APIRouter()
 
 
 @router.post("/purchase", response_model=PurchaseResponse)
+@router.post("/purchase", response_model=PurchaseResponse)
 def purchase(data: PurchaseRequest, db: Session = Depends(get_db)):
     try:
         result = purchase_service.purchase(db, data.item_id, data.cash_inserted)
         return PurchaseResponse(**result)
+
     except ValueError as e:
-        if e.args[0] == "item_not_found":
+        error = e.args[0]
+
+        if error == "item_not_found":
             raise HTTPException(status_code=404, detail="Item not found")
-        if e.args[0] == "out_of_stock":
+
+        if error == "out_of_stock":
             raise HTTPException(
                 status_code=400,
                 detail={"error": "Item out of stock"},
             )
-        if e.args[0] == "insufficient_cash":
+
+        if error == "invalid_cash_amount":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid cash amount"},
+            )
+
+        if error == "unsupported_denomination":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Unsupported denomination"},
+            )
+
+        if error == "insufficient_cash":
             required = e.args[1]
             inserted = e.args[2]
             raise HTTPException(
@@ -36,7 +54,9 @@ def purchase(data: PurchaseRequest, db: Session = Depends(get_db)):
                     "inserted": inserted,
                 },
             )
+
         raise
+
 
 
 @router.get("/purchase/change-breakdown", response_model=ChangeBreakdownResponse)
