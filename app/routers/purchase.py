@@ -61,4 +61,13 @@ def purchase(data: PurchaseRequest, db: Session = Depends(get_db)):
 
 @router.get("/purchase/change-breakdown", response_model=ChangeBreakdownResponse)
 def change_breakdown(change: int = Query(..., ge=0)):
-    return purchase_service.change_breakdown(change)
+    try:
+        return purchase_service.change_breakdown(change)
+    except ValueError as e:
+        if e.args[0] == "cannot_make_exact_change":
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot make exact change with supported denominations",
+            )
+        raise
+
